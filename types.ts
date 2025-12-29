@@ -50,6 +50,7 @@ export enum ViewState {
   NEW_EVALUATION = 'NEW_EVALUATION',
   TREE_EVALUATION = 'TREE_EVALUATION',
   SUMMARY = 'SUMMARY',
+  USER_MANUAL = 'USER_MANUAL', // New state for user manual
 }
 
 export interface DonationProduct {

@@ -13,7 +13,7 @@ interface Props {
   isDark: boolean;
 }
 
-const InputField = ({ label, value, onChange, type = "number", max }: any) => (
+const InputField = ({ label, value, onChange, type = "number", max = 9999 }: any) => (
   <div className="flex flex-col">
     <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">{label}</label>
     <input
@@ -25,8 +25,16 @@ const InputField = ({ label, value, onChange, type = "number", max }: any) => (
       placeholder="0"
       onFocus={(e) => e.target.select()}
       onChange={(e) => {
-        const val = e.target.value === '' ? 0 : parseInt(e.target.value);
-        if (val >= 0) onChange(val);
+        let val = parseInt(e.target.value);
+        
+        // Handle empty input or NaN
+        if (isNaN(val)) val = 0;
+        
+        // Enforce boundaries
+        if (val < 0) val = 0;
+        if (max !== undefined && val > max) val = max;
+        
+        onChange(val);
       }}
       className="w-full p-3 border rounded-lg text-xl font-bold text-center bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900 outline-none transition-all"
     />
@@ -232,12 +240,12 @@ const TreeEvaluation: React.FC<Props> = ({ evaluation, onUpdateTree, onNavigate,
             <span className="bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 px-2 py-0.5 rounded text-sm">1</span> Conteo de Frutos
           </h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
-             <InputField label="# FA (Frutos Arbol)" value={currentTree.fa} onChange={(v: number) => update('fa', v)} />
-             <InputField label="# FBA (Broca Arbol)" value={currentTree.fba} onChange={(v: number) => update('fba', v)} />
+             <InputField label="# FA (Frutos Arbol)" value={currentTree.fa} onChange={(v: number) => update('fa', v)} max={300} />
+             <InputField label="# FBA (Broca Arbol)" value={currentTree.fba} onChange={(v: number) => update('fba', v)} max={300} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <InputField label="# FS (Frutos Suelo)" value={currentTree.fs} onChange={(v: number) => update('fs', v)} />
-             <InputField label="# FBS (Broca Suelo)" value={currentTree.fbs} onChange={(v: number) => update('fbs', v)} />
+             <InputField label="# FS (Frutos Suelo)" value={currentTree.fs} onChange={(v: number) => update('fs', v)} max={300} />
+             <InputField label="# FBS (Broca Suelo)" value={currentTree.fbs} onChange={(v: number) => update('fbs', v)} max={300} />
           </div>
         </section>
 
@@ -247,10 +255,10 @@ const TreeEvaluation: React.FC<Props> = ({ evaluation, onUpdateTree, onNavigate,
             <span className="bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 px-2 py-0.5 rounded text-sm">2</span> Hojas y Roya
           </h3>
           <div className="mb-4">
-             <InputField label="NH (Total Hojas)" value={currentTree.nh} onChange={(v: number) => update('nh', v)} />
+             <InputField label="NH (Total Hojas)" value={currentTree.nh} onChange={(v: number) => update('nh', v)} max={50} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <InputField label="HR (Hojas Roya)" value={currentTree.hr} onChange={(v: number) => update('hr', v)} />
+             <InputField label="HR (Hojas Roya)" value={currentTree.hr} onChange={(v: number) => update('hr', v)} max={50} />
              <div className="flex flex-col">
                <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Grado (0-9)</label>
                <select 

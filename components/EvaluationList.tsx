@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Trash2, Edit, Calendar, Moon, Sun, Info, X, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Calendar, Moon, Sun, Info, X, AlertTriangle, BookText } from 'lucide-react';
 import { Evaluation } from '../types';
 
 interface Props {
@@ -9,9 +9,10 @@ interface Props {
   onDelete: (id: string) => void;
   toggleTheme: () => void;
   isDark: boolean;
+  onShowManual: () => void; // New prop for showing the user manual
 }
 
-const EvaluationList: React.FC<Props> = ({ evaluations, onNew, onSelect, onDelete, toggleTheme, isDark }) => {
+const EvaluationList: React.FC<Props> = ({ evaluations, onNew, onSelect, onDelete, toggleTheme, isDark, onShowManual }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showInfo, setShowInfo] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -39,6 +40,12 @@ const EvaluationList: React.FC<Props> = ({ evaluations, onNew, onSelect, onDelet
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Evaluaciones</h1>
           <div className="flex gap-2">
+            <button 
+               onClick={onShowManual} // Call the new prop
+               className="p-2 bg-green-600 dark:bg-emerald-800 rounded-full hover:bg-green-500 transition-colors"
+             >
+               <BookText size={20} />
+             </button>
             <button 
                onClick={() => setShowInfo(true)}
                className="p-2 bg-green-600 dark:bg-emerald-800 rounded-full hover:bg-green-500 transition-colors"

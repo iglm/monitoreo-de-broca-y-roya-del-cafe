@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Evaluation } from '../types';
 import { exportEvaluationToExcel } from '../services/excelExport';
 import { getEvaluations } from '../services/storage';
-import { FileDown, ArrowLeft, Edit2, CheckCircle2, AlertCircle, Mail, Heart, TrendingUp, DollarSign, Printer, X, MapPin, Sprout, Calendar, User, Hash, Ruler } from 'lucide-react';
+import { FileDown, ArrowLeft, Edit2, CheckCircle2, AlertCircle, Mail, Heart, TrendingUp, DollarSign, Printer, X, MapPin, Sprout, Calendar, User, Hash, BrainCircuit, Sparkles, Loader2, Key, ExternalLink, Trash2 } from 'lucide-react';
 import DonationModal from './DonationModal';
+import { generateAgronomicAnalysis, saveApiKey, getStoredApiKey, removeApiKey } from '../services/ai';
+import ReactMarkdown from 'react-markdown';
 
 interface Props {
   evaluation: Evaluation;
@@ -96,6 +98,13 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   
+  // AI State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
+  
   // Calculator State
   const [coffeePrice, setCoffeePrice] = useState<number>(0); // Per Carga/Kilo
   const [harvestEst, setHarvestEst] = useState<number>(0);
@@ -176,7 +185,48 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
   };
 
   const handlePrint = () => {
-    window.print();
+    // Basic reliable print trigger with a small delay to ensure UI threads are clear
+    setTimeout(() => {
+        window.print();
+    }, 100);
+  };
+
+  // --- AI ANALYSIS ---
+  const handleAiAnalysis = async () => {
+    setIsAnalyzing(true);
+    setShowAiModal(true);
+    setAiAnalysis(null);
+
+    const stats = {
+      infestationPercent,
+      royaPercent,
+      totalTrees
+    };
+
+    try {
+      const result = await generateAgronomicAnalysis(evaluation, stats);
+      setAiAnalysis(result);
+    } catch (error: any) {
+      setIsAnalyzing(false);
+      if (error.message === 'MISSING_KEY' || error.message === 'INVALID_KEY') {
+         setShowAiModal(false);
+         setShowKeyInput(true); // Open key input modal
+      } else {
+         setAiAnalysis(`Error: ${error.message || "No se pudo generar el análisis."}`);
+      }
+    } finally {
+      if (!showKeyInput) setIsAnalyzing(false);
+    }
+  };
+
+  const saveKeyAndRetry = () => {
+     if (tempApiKey.length > 10) {
+        saveApiKey(tempApiKey);
+        setShowKeyInput(false);
+        handleAiAnalysis(); // Retry immediately
+     } else {
+        alert("Llave inválida");
+     }
   };
 
   // --- ECONOMICS ---
@@ -276,21 +326,30 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
           </div>
 
           {/* Action Buttons for Tools */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button 
               onClick={() => setShowHistory(true)}
-              className="flex flex-col items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 transition-colors"
+              className="flex flex-col items-center justify-center p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 transition-colors"
             >
-              <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400 mb-2" />
-              <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Ver Tendencia</span>
+              <TrendingUp size={20} className="text-indigo-600 dark:text-indigo-400 mb-1" />
+              <span className="text-[10px] font-bold text-indigo-900 dark:text-indigo-300 text-center">Ver Tendencia</span>
             </button>
             
             <button 
               onClick={() => setShowCalculator(true)}
-              className="flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-colors"
+              className="flex flex-col items-center justify-center p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-colors"
             >
-              <DollarSign size={24} className="text-emerald-600 dark:text-emerald-400 mb-2" />
-              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">Calc. Pérdidas</span>
+              <DollarSign size={20} className="text-emerald-600 dark:text-emerald-400 mb-1" />
+              <span className="text-[10px] font-bold text-emerald-900 dark:text-emerald-300 text-center">Calc. Pérdidas</span>
+            </button>
+
+            <button 
+              onClick={handleAiAnalysis}
+              className="flex flex-col items-center justify-center p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl hover:bg-purple-100 transition-colors relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none"></div>
+              <Sparkles size={20} className="text-purple-600 dark:text-purple-400 mb-1" />
+              <span className="text-[10px] font-bold text-purple-900 dark:text-purple-300 text-center">Analizar con IA</span>
             </button>
           </div>
 
@@ -310,12 +369,17 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
 
         <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-lg z-10 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-              <button 
-              onClick={handlePrint}
-              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3 rounded-xl font-bold text-sm transition-all"
-              >
-              <Printer size={18} /> Imprimir / PDF
-              </button>
+              <div>
+                <button 
+                  onClick={handlePrint}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3 rounded-xl font-bold text-sm transition-all"
+                >
+                  <Printer size={18} /> Imprimir / PDF
+                </button>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 text-center">
+                  (Seleccione 'Guardar como PDF' en el diálogo de impresión)
+                </p>
+              </div>
               <button 
               onClick={handleExport}
               className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg active:scale-[0.98] transition-all"
@@ -352,7 +416,7 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
         <div className="border-b-4 border-green-700 pb-4 mb-6 flex justify-between items-end">
            <div>
               <h1 className="text-3xl font-bold text-gray-900 uppercase tracking-tight">Informe Técnico</h1>
-              <p className="text-green-800 text-sm font-semibold uppercase tracking-widest mt-1">Monitoreo Fitosanitario de Café</p>
+              <p className="text-green-800 text-sm font-semibold uppercase tracking-widest mt-1">Evaluación BrocaRoya</p>
            </div>
            <div className="text-right">
               <div className="flex items-center justify-end gap-2 text-green-700 mb-1">
@@ -467,13 +531,118 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
               <p className="text-xs text-gray-500">Ing. Lucas Mateo Tabares F.</p>
            </div>
            <div className="text-right text-[10px] text-gray-400">
-              <p>Generado con App Evaluación Broca y Roya</p>
+              <p>Generado con Evaluación BrocaRoya</p>
               <p>Desarrollado por Ing. Lucas Mateo Tabares F.</p>
            </div>
         </div>
       </div>
 
       {/* --- MODALS --- */}
+
+      {/* API Key Input Modal */}
+      {showKeyInput && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowKeyInput(false)}>
+           <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl w-full max-w-md shadow-2xl border-2 border-purple-500/50" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-start mb-4">
+                   <h3 className="font-black text-xl text-gray-900 dark:text-white flex items-center gap-2">
+                       <Key className="text-purple-500" /> Configurar IA (Gratis)
+                   </h3>
+                   <button onClick={() => setShowKeyInput(false)}><X size={24} className="text-gray-400"/></button>
+               </div>
+               
+               <div className="space-y-4">
+                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm text-gray-700 dark:text-gray-300 border border-purple-100 dark:border-purple-800">
+                      <p className="font-bold text-purple-700 dark:text-purple-300 mb-1">¿Cómo funciona?</p>
+                      Para usar la inteligencia artificial de Gemini gratis, necesitas tu propia llave (API Key). Esta se guarda solo en tu celular.
+                   </div>
+
+                   <ol className="list-decimal pl-5 text-sm space-y-2 text-gray-600 dark:text-gray-400">
+                      <li>Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-500 underline font-bold inline-flex items-center gap-1">Google AI Studio <ExternalLink size={12}/></a></li>
+                      <li>Inicia sesión con tu cuenta Google.</li>
+                      <li>Presiona <strong>"Create API Key"</strong>.</li>
+                      <li>Copia la llave y pégala aquí abajo.</li>
+                   </ol>
+
+                   <div>
+                      <input 
+                        type="password" 
+                        className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                        placeholder="Pegar API Key aquí (AIzaSy...)"
+                        value={tempApiKey}
+                        onChange={(e) => setTempApiKey(e.target.value)}
+                      />
+                   </div>
+
+                   <button 
+                      onClick={saveKeyAndRetry}
+                      className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                   >
+                      Guardar y Analizar
+                   </button>
+               </div>
+           </div>
+        </div>
+      )}
+
+      {/* AI Analysis Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => setShowAiModal(false)}>
+           <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl w-full max-w-sm shadow-2xl border dark:border-gray-700" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-4 border-b dark:border-gray-800 pb-2">
+                   <h3 className="font-bold text-lg dark:text-white flex items-center gap-2">
+                       <BrainCircuit className="text-purple-600" /> Diagnóstico IA
+                   </h3>
+                   <button onClick={() => setShowAiModal(false)}><X size={24} className="text-gray-400"/></button>
+               </div>
+               
+               <div className="min-h-[150px] max-h-[60vh] overflow-y-auto custom-scrollbar">
+                  {isAnalyzing ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Loader2 size={32} className="animate-spin text-purple-600 mb-2" />
+                      <p className="text-sm text-gray-500 animate-pulse">Analizando datos del lote...</p>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                       {aiAnalysis ? (
+                         <div className="prose dark:prose-invert text-sm">
+                           <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                         </div>
+                       ) : (
+                         <p className="text-red-500 text-center">No se pudo obtener el análisis.</p>
+                       )}
+                    </div>
+                  )}
+               </div>
+
+               <div className="mt-4 pt-3 border-t dark:border-gray-800">
+                  <p className="text-[10px] text-gray-400 text-center mb-2">
+                    * Este análisis es generado por IA y debe ser validado por un profesional.
+                  </p>
+                  
+                  <div className="flex gap-2">
+                     <button 
+                         onClick={() => {
+                            if (confirm('¿Borrar llave API guardada?')) {
+                               removeApiKey();
+                               setShowAiModal(false);
+                            }
+                         }}
+                         className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                         title="Borrar API Key"
+                     >
+                        <Trash2 size={18} />
+                     </button>
+                     <button 
+                         onClick={() => setShowAiModal(false)} 
+                         className="flex-1 py-2 bg-gray-200 dark:bg-gray-800 font-bold rounded-lg text-gray-700 dark:text-gray-200 text-sm"
+                     >
+                         Cerrar
+                     </button>
+                  </div>
+               </div>
+           </div>
+        </div>
+      )}
 
       {/* History Modal */}
       {showHistory && (

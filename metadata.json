@@ -1,5 +1,9 @@
 {
-  "name": "monitoreo de broca y roya del cafe",
-  "description": "A high-contrast, offline-capable field data collection tool for coffee crop phytosanitary evaluation. Features auto-saving, infestation calculation, and Excel export.",
-  "requestFramePermissions": []
+  "name": "Evaluación BrocaRoya",
+  "description": "Herramienta técnica de campo offline para la evaluación fitosanitaria de café (Broca y Roya). Incluye análisis IA, reportes PDF y Excel.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
 }

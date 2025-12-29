@@ -23,8 +23,8 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
           <div className="bg-white/10 p-3 rounded-2xl mb-2 backdrop-blur-md border border-white/20 shadow-xl ring-1 ring-green-500/30">
              <Smartphone size={28} className="text-green-400 drop-shadow-md" strokeWidth={1.5} />
           </div>
-          <h1 className="text-xl font-black tracking-tight text-white">
-            Evaluación de Broca y Roya
+          <h1 className="text-2xl font-black tracking-tight text-white">
+            Evaluación BrocaRoya
           </h1>
           <p className="text-gray-400 text-[10px] font-medium tracking-widest uppercase">
             Herramienta Técnica de Campo
@@ -169,7 +169,7 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
               <section className="bg-red-900/20 p-3 rounded border border-red-900/50">
                 <h3 className="font-bold text-red-400 text-sm mb-1 flex items-center gap-1"><Copyright size={12}/> Propiedad Intelectual y Anti-Piratería</h3>
                 <p>
-                  El código fuente, diseño gráfico, logotipos y lógica de negocio de "Evaluación Cafetera" son propiedad intelectual exclusiva de <strong>Lucas Mateo Tabares Franco</strong>, protegidos por la Ley 23 de 1982 sobre Derechos de Autor.
+                  El código fuente, diseño gráfico, logotipos y lógica de negocio de "Evaluación BrocaRoya" son propiedad intelectual exclusiva de <strong>Lucas Mateo Tabares Franco</strong>, protegidos por la Ley 23 de 1982 sobre Derechos de Autor.
                 </p>
                 <p className="mt-2 font-bold text-white">Queda estrictamente prohibido:</p>
                 <ul className="list-disc pl-4 space-y-1 text-gray-400 mt-1">

@@ -7,6 +7,7 @@ import GeneralInfoForm from './components/GeneralInfoForm';
 import TreeEvaluation from './components/TreeEvaluation';
 import Summary from './components/Summary';
 import SplashScreen from './components/SplashScreen';
+import UserManual from './components/UserManual'; // Import the new UserManual component
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
@@ -197,6 +198,7 @@ const App = () => {
           onDelete={handleDelete}
           toggleTheme={toggleTheme}
           isDark={darkMode}
+          onShowManual={() => setView(ViewState.USER_MANUAL)} // Pass new prop
         />
       )}
 
@@ -227,6 +229,10 @@ const App = () => {
           onBackToEdit={() => setView(ViewState.TREE_EVALUATION)}
           onExit={handleSaveAndExit}
         />
+      )}
+
+      {view === ViewState.USER_MANUAL && (
+        <UserManual onBack={() => setView(ViewState.HOME)} />
       )}
     </div>
   );
