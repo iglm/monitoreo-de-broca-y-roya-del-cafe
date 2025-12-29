@@ -50,6 +50,32 @@
         background-color: rgba(156, 163, 175, 0.5);
         border-radius: 20px;
       }
+
+      /* PRINT / PDF GENERATION STYLES */
+      @media print {
+        @page {
+          margin: 0.5cm;
+          size: A4 portrait;
+        }
+        
+        body {
+          background-color: white !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; /* Professional Font */
+        }
+
+        /* Hide Scrollbars in print */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Force visibility of print section */
+        #root {
+          height: auto !important;
+          overflow: visible !important;
+        }
+      }
     </style>
   <script type="importmap">
 {

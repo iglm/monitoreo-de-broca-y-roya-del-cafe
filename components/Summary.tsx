@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Evaluation } from '../types';
 import { exportEvaluationToExcel } from '../services/excelExport';
 import { getEvaluations } from '../services/storage';
-import { FileDown, ArrowLeft, Edit2, CheckCircle2, AlertCircle, Mail, Heart, TrendingUp, DollarSign, Printer, X, MapPin } from 'lucide-react';
+import { FileDown, ArrowLeft, Edit2, CheckCircle2, AlertCircle, Mail, Heart, TrendingUp, DollarSign, Printer, X, MapPin, Sprout, Calendar, User, Hash, Ruler } from 'lucide-react';
 import DonationModal from './DonationModal';
 
 interface Props {
@@ -191,147 +191,285 @@ const Summary: React.FC<Props> = ({ evaluation, onBackToEdit, onExit }) => {
   const estimatedLoss = calculateLoss();
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative print:bg-white print:text-black">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
       
-      {/* Toast Notification (Hidden in Print) */}
-      <div 
-        className={`fixed top-20 mt-[env(safe-area-inset-top)] left-1/2 transform -translate-x-1/2 w-11/12 max-w-sm z-50 transition-all duration-300 print:hidden ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
-      >
-        {toast && (
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border ${
-            toast.type === 'success' ? 'bg-green-100 border-green-200 text-green-900 dark:bg-green-900/90 dark:text-green-100 dark:border-green-800' :
-            toast.type === 'error' ? 'bg-red-100 border-red-200 text-red-900 dark:bg-red-900/90 dark:text-red-100 dark:border-red-800' :
-            'bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-900/90 dark:text-blue-100 dark:border-blue-800'
-          }`}>
-             {toast.type === 'success' && <CheckCircle2 size={20} />}
-             {toast.type === 'error' && <AlertCircle size={20} />}
-             {toast.type === 'info' && <FileDown size={20} />}
-             <p className="text-sm font-bold">{toast.msg}</p>
+      {/* 
+        ================================================================
+        1. VISTA DE APLICACIÓN (Oculta al imprimir)
+        ================================================================ 
+      */}
+      <div className="print:hidden h-full flex flex-col">
+        {/* Toast Notification */}
+        <div 
+          className={`fixed top-20 mt-[env(safe-area-inset-top)] left-1/2 transform -translate-x-1/2 w-11/12 max-w-sm z-50 transition-all duration-300 ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
+        >
+          {toast && (
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border ${
+              toast.type === 'success' ? 'bg-green-100 border-green-200 text-green-900 dark:bg-green-900/90 dark:text-green-100 dark:border-green-800' :
+              toast.type === 'error' ? 'bg-red-100 border-red-200 text-red-900 dark:bg-red-900/90 dark:text-red-100 dark:border-red-800' :
+              'bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-900/90 dark:text-blue-100 dark:border-blue-800'
+            }`}>
+              {toast.type === 'success' && <CheckCircle2 size={20} />}
+              {toast.type === 'error' && <AlertCircle size={20} />}
+              {toast.type === 'info' && <FileDown size={20} />}
+              <p className="text-sm font-bold">{toast.msg}</p>
+            </div>
+          )}
+        </div>
+
+        <header className="bg-white dark:bg-gray-800 p-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-sm flex items-center justify-between z-10">
+          <button onClick={onExit} className="text-gray-600 dark:text-gray-300 font-bold flex items-center gap-1">
+            <ArrowLeft size={18} /> Inicio
+          </button>
+          <h1 className="font-bold text-lg text-gray-900 dark:text-white">Resumen del Lote</h1>
+          <button onClick={onBackToEdit} className="text-green-600 dark:text-green-400 font-bold text-sm flex items-center gap-1">
+            <Edit2 size={16} /> Editar
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          
+          {/* Info Card */}
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="flex justify-between">
+              <div>
+                  <h2 className="font-bold text-xl mb-1 text-gray-900 dark:text-white">{evaluation.nombreLote}</h2>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">{evaluation.caficultor}</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">{evaluation.fechaVisita}</p>
+              </div>
+              {evaluation.location && (
+                <div className="text-right">
+                    <div className="flex items-center justify-end gap-1 text-blue-600 dark:text-blue-400">
+                      <MapPin size={16} />
+                      <span className="text-xs font-bold">GPS</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500">{evaluation.location.lat.toFixed(4)}</p>
+                    <p className="text-[10px] text-gray-500">{evaluation.location.lng.toFixed(4)}</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Main Stats with Alerts */}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard 
+              label="% Infestación Broca" 
+              value={`${infestationPercent}%`} 
+              variant="success"
+              alertLevel={brocaLevel}
+            />
+            <StatCard 
+              label="% Incidencia Roya" 
+              value={`${royaPercent}%`} 
+              variant="warning"
+              alertLevel={royaLevel}
+            />
+            <StatCard 
+              label="Total Frutos" 
+              value={totalFruits} 
+              subValue={`A: ${totals.fa} | S: ${totals.fs}`}
+            />
+            <StatCard 
+              label="Total Árboles" 
+              value={totalTrees}
+            />
+          </div>
+
+          {/* Action Buttons for Tools */}
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => setShowHistory(true)}
+              className="flex flex-col items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 transition-colors"
+            >
+              <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400 mb-2" />
+              <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Ver Tendencia</span>
+            </button>
+            
+            <button 
+              onClick={() => setShowCalculator(true)}
+              className="flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-colors"
+            >
+              <DollarSign size={24} className="text-emerald-600 dark:text-emerald-400 mb-2" />
+              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">Calc. Pérdidas</span>
+            </button>
+          </div>
+
+          {/* Recommendations Section */}
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+              <h3 className="font-bold text-gray-800 dark:text-white mb-3">Diagnóstico Automático</h3>
+              <ul className="space-y-2 text-sm">
+                  {brocaLevel === 'green' && <li className="flex items-start gap-2 text-green-700 dark:text-green-400"><CheckCircle2 size={16} className="mt-0.5"/> Broca bajo control. Mantener monitoreo.</li>}
+                  {brocaLevel === 'yellow' && <li className="flex items-start gap-2 text-amber-600 dark:text-amber-400"><AlertCircle size={16} className="mt-0.5"/> Alerta de Broca. Se recomienda RE-RE (Recolección de Repaso).</li>}
+                  {brocaLevel === 'red' && <li className="flex items-start gap-2 text-red-600 dark:text-red-400"><AlertCircle size={16} className="mt-0.5"/> <strong>ALERTA CRÍTICA:</strong> Broca fuera de control. Evaluar control químico/biológico inmediato.</li>}
+                  
+                  {royaLevel === 'green' && <li className="flex items-start gap-2 text-green-700 dark:text-green-400"><CheckCircle2 size={16} className="mt-0.5"/> Roya bajo niveles de daño.</li>}
+                  {royaLevel === 'red' && <li className="flex items-start gap-2 text-red-600 dark:text-red-400"><AlertCircle size={16} className="mt-0.5"/> Alta incidencia de Roya. Revisar plan de nutrición y fungicidas.</li>}
+              </ul>
+          </div>
+        </div>
+
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-lg z-10 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+              <button 
+              onClick={handlePrint}
+              className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3 rounded-xl font-bold text-sm transition-all"
+              >
+              <Printer size={18} /> Imprimir / PDF
+              </button>
+              <button 
+              onClick={handleExport}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg active:scale-[0.98] transition-all"
+              >
+              <FileDown size={18} /> Excel
+              </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <a 
+              href="mailto:mateotabares7@gmail.com?subject=Consulta%20Técnica%20sobre%20Lote"
+              className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 py-3 rounded-xl font-bold text-xs border border-blue-200 dark:border-blue-800 transition-all uppercase tracking-wide"
+            >
+              <Mail size={16} /> Contactar Ing.
+            </a>
+            
+            <button 
+              onClick={() => setShowDonation(true)}
+              className="flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 py-3 rounded-xl font-bold text-xs border border-amber-200 dark:border-amber-800 transition-all uppercase tracking-wide"
+            >
+              <Heart size={16} fill="currentColor" className="opacity-50" /> Apoyar Proyecto
+            </button>
+          </div>
+        </div>
       </div>
 
-      <header className="bg-white dark:bg-gray-800 p-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-sm flex items-center justify-between z-10 print:hidden">
-        <button onClick={onExit} className="text-gray-600 dark:text-gray-300 font-bold flex items-center gap-1">
-          <ArrowLeft size={18} /> Inicio
-        </button>
-        <h1 className="font-bold text-lg text-gray-900 dark:text-white">Resumen del Lote</h1>
-        <button onClick={onBackToEdit} className="text-green-600 dark:text-green-400 font-bold text-sm flex items-center gap-1">
-          <Edit2 size={16} /> Editar
-        </button>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 print:overflow-visible print:h-auto">
-        
-        {/* Info Card */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm print:border-black">
-           <div className="flex justify-between">
-             <div>
-                <h2 className="font-bold text-xl mb-1 text-gray-900 dark:text-white print:text-black">{evaluation.nombreLote}</h2>
-                <p className="text-gray-700 dark:text-gray-300 font-medium print:text-black">{evaluation.caficultor}</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2 print:text-gray-600">{evaluation.fechaVisita}</p>
-             </div>
-             {evaluation.location && (
-               <div className="text-right">
-                  <div className="flex items-center justify-end gap-1 text-blue-600 dark:text-blue-400">
-                     <MapPin size={16} />
-                     <span className="text-xs font-bold">GPS</span>
-                  </div>
-                  <p className="text-[10px] text-gray-500">{evaluation.location.lat.toFixed(4)}</p>
-                  <p className="text-[10px] text-gray-500">{evaluation.location.lng.toFixed(4)}</p>
-               </div>
-             )}
+      {/* 
+        ================================================================
+        2. VISTA DE IMPRESIÓN (Visible SOLO al imprimir)
+        ================================================================ 
+      */}
+      <div className="hidden print:block bg-white text-black p-8 font-serif">
+        {/* Header */}
+        <div className="border-b-4 border-green-700 pb-4 mb-6 flex justify-between items-end">
+           <div>
+              <h1 className="text-3xl font-bold text-gray-900 uppercase tracking-tight">Informe Técnico</h1>
+              <p className="text-green-800 text-sm font-semibold uppercase tracking-widest mt-1">Monitoreo Fitosanitario de Café</p>
+           </div>
+           <div className="text-right">
+              <div className="flex items-center justify-end gap-2 text-green-700 mb-1">
+                 <Sprout size={24} />
+                 <span className="font-bold text-lg">AgroData</span>
+              </div>
+              <p className="text-xs text-gray-500">Fecha de Generación: {new Date().toLocaleDateString()}</p>
            </div>
         </div>
 
-        {/* Main Stats with Alerts */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard 
-            label="% Infestación Broca" 
-            value={`${infestationPercent}%`} 
-            variant="success"
-            alertLevel={brocaLevel}
-          />
-          <StatCard 
-            label="% Incidencia Roya" 
-            value={`${royaPercent}%`} 
-            variant="warning"
-            alertLevel={royaLevel}
-          />
-          <StatCard 
-            label="Total Frutos" 
-            value={totalFruits} 
-            subValue={`A: ${totals.fa} | S: ${totals.fs}`}
-          />
-          <StatCard 
-            label="Total Árboles" 
-            value={totalTrees}
-          />
+        {/* General Info Grid */}
+        <div className="mb-6 bg-gray-50 border border-gray-200 rounded p-4">
+           <h3 className="text-sm font-bold text-green-800 uppercase border-b border-gray-300 pb-1 mb-3 flex items-center gap-2">
+              <User size={14}/> Información del Lote
+           </h3>
+           <div className="grid grid-cols-2 gap-y-2 text-sm">
+              <div className="flex justify-between border-b border-gray-200 border-dotted mr-4">
+                 <span className="text-gray-500">Propietario:</span>
+                 <span className="font-bold">{evaluation.caficultor}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200 border-dotted">
+                 <span className="text-gray-500">Lote:</span>
+                 <span className="font-bold">{evaluation.nombreLote}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200 border-dotted mr-4">
+                 <span className="text-gray-500">Fecha Visita:</span>
+                 <span className="font-bold">{evaluation.fechaVisita}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200 border-dotted">
+                 <span className="text-gray-500">Variedad:</span>
+                 <span className="font-bold">{evaluation.variedad || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200 border-dotted mr-4">
+                 <span className="text-gray-500">Edad:</span>
+                 <span className="font-bold">{evaluation.edadAnios ? `${evaluation.edadAnios} años` : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200 border-dotted">
+                 <span className="text-gray-500">Densidad:</span>
+                 <span className="font-bold">{evaluation.densidad ? `${evaluation.densidad} arb/ha` : 'N/A'}</span>
+              </div>
+           </div>
         </div>
 
-        {/* Action Buttons for Tools (Hidden in Print) */}
-        <div className="grid grid-cols-2 gap-3 print:hidden">
-          <button 
-             onClick={() => setShowHistory(true)}
-             className="flex flex-col items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl hover:bg-indigo-100 transition-colors"
-          >
-             <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400 mb-2" />
-             <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Ver Tendencia</span>
-          </button>
-          
-          <button 
-             onClick={() => setShowCalculator(true)}
-             className="flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-colors"
-          >
-             <DollarSign size={24} className="text-emerald-600 dark:text-emerald-400 mb-2" />
-             <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">Calc. Pérdidas</span>
-          </button>
+        {/* Results Grid */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+           {/* Left: Stats */}
+           <div>
+              <h3 className="text-sm font-bold text-green-800 uppercase border-b border-gray-300 pb-1 mb-3 flex items-center gap-2">
+                 <Hash size={14}/> Resultados del Muestreo
+              </h3>
+              <table className="w-full text-sm">
+                 <tbody>
+                    <tr className="border-b border-gray-100">
+                       <td className="py-2 text-gray-600">Árboles Evaluados</td>
+                       <td className="py-2 text-right font-bold">{totalTrees}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100 bg-green-50">
+                       <td className="py-2 text-green-900 font-bold pl-2">Infestación Broca</td>
+                       <td className={`py-2 text-right font-bold pr-2 ${brocaLevel === 'red' ? 'text-red-600' : 'text-gray-900'}`}>{infestationPercent}%</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                       <td className="py-2 text-gray-600 pl-2 text-xs italic">- Frutos en Árbol</td>
+                       <td className="py-2 text-right text-gray-500">{totals.fba} brocados / {totals.fa} total</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                       <td className="py-2 text-gray-600 pl-2 text-xs italic">- Frutos en Suelo</td>
+                       <td className="py-2 text-right text-gray-500">{totals.fbs} brocados / {totals.fs} total</td>
+                    </tr>
+                    <tr className="border-b border-gray-100 bg-amber-50">
+                       <td className="py-2 text-amber-900 font-bold pl-2">Incidencia Roya</td>
+                       <td className={`py-2 text-right font-bold pr-2 ${royaLevel === 'red' ? 'text-red-600' : 'text-gray-900'}`}>{royaPercent}%</td>
+                    </tr>
+                 </tbody>
+              </table>
+           </div>
+           
+           {/* Right: Diagnosis & Chart */}
+           <div>
+              <h3 className="text-sm font-bold text-green-800 uppercase border-b border-gray-300 pb-1 mb-3 flex items-center gap-2">
+                 <TrendingUp size={14}/> Histórico y Diagnóstico
+              </h3>
+              <div className="border border-gray-200 rounded p-2 mb-3 bg-white">
+                 <SimpleTrendChart history={historyData} />
+              </div>
+              <div className="text-xs bg-gray-50 p-3 rounded border-l-4 border-gray-400">
+                 <p className="font-bold text-gray-700 mb-1">Diagnóstico Automático:</p>
+                 {brocaLevel === 'red' && <p className="text-red-700 font-bold">• ALERTA CRÍTICA: Niveles de Broca superiores al umbral económico.</p>}
+                 {brocaLevel === 'yellow' && <p className="text-amber-700">• ALERTA: Se recomienda iniciar labores de repaso (Re-Re).</p>}
+                 {brocaLevel === 'green' && <p className="text-green-700">• Niveles de Broca bajo control.</p>}
+              </div>
+           </div>
         </div>
 
-        {/* Recommendations Section (Visible in Print) */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-            <h3 className="font-bold text-gray-800 dark:text-white mb-3">Diagnóstico Automático</h3>
-            <ul className="space-y-2 text-sm">
-                {brocaLevel === 'green' && <li className="flex items-start gap-2 text-green-700 dark:text-green-400"><CheckCircle2 size={16} className="mt-0.5"/> Broca bajo control. Mantener monitoreo.</li>}
-                {brocaLevel === 'yellow' && <li className="flex items-start gap-2 text-amber-600 dark:text-amber-400"><AlertCircle size={16} className="mt-0.5"/> Alerta de Broca. Se recomienda RE-RE (Recolección de Repaso).</li>}
-                {brocaLevel === 'red' && <li className="flex items-start gap-2 text-red-600 dark:text-red-400"><AlertCircle size={16} className="mt-0.5"/> <strong>ALERTA CRÍTICA:</strong> Broca fuera de control. Evaluar control químico/biológico inmediato.</li>}
-                
-                {royaLevel === 'green' && <li className="flex items-start gap-2 text-green-700 dark:text-green-400"><CheckCircle2 size={16} className="mt-0.5"/> Roya bajo niveles de daño.</li>}
-                {royaLevel === 'red' && <li className="flex items-start gap-2 text-red-600 dark:text-red-400"><AlertCircle size={16} className="mt-0.5"/> Alta incidencia de Roya. Revisar plan de nutrición y fungicidas.</li>}
-            </ul>
-        </div>
-      </div>
-
-      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-lg z-10 space-y-3 print:hidden">
-        <div className="grid grid-cols-2 gap-3">
-            <button 
-            onClick={handlePrint}
-            className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3 rounded-xl font-bold text-sm transition-all"
-            >
-            <Printer size={18} /> Imprimir / PDF
-            </button>
-            <button 
-            onClick={handleExport}
-            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg active:scale-[0.98] transition-all"
-            >
-            <FileDown size={18} /> Excel
-            </button>
+        {/* Recommendations Area (Blank Lines for writing or auto-filled) */}
+        <div className="mb-12">
+           <h3 className="text-sm font-bold text-green-800 uppercase border-b border-gray-300 pb-1 mb-3 flex items-center gap-2">
+              <CheckCircle2 size={14}/> Recomendaciones Técnicas
+           </h3>
+           <div className="border border-gray-200 rounded min-h-[150px] p-4 text-sm leading-relaxed">
+              <p className="text-gray-400 italic mb-4">[Espacio reservado para observaciones adicionales del agrónomo]</p>
+              <div className="border-b border-gray-100 h-8"></div>
+              <div className="border-b border-gray-100 h-8"></div>
+              <div className="border-b border-gray-100 h-8"></div>
+           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-           <a 
-            href="mailto:mateotabares7@gmail.com?subject=Consulta%20Técnica%20sobre%20Lote"
-            className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 py-3 rounded-xl font-bold text-xs border border-blue-200 dark:border-blue-800 transition-all uppercase tracking-wide"
-          >
-            <Mail size={16} /> Contactar Ing.
-          </a>
-          
-          <button 
-            onClick={() => setShowDonation(true)}
-            className="flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 py-3 rounded-xl font-bold text-xs border border-amber-200 dark:border-amber-800 transition-all uppercase tracking-wide"
-          >
-            <Heart size={16} fill="currentColor" className="opacity-50" /> Apoyar Proyecto
-          </button>
+        {/* Footer / Signature */}
+        <div className="mt-auto pt-12 flex justify-between items-end">
+           <div className="text-center w-64">
+              <div className="border-b border-black mb-2"></div>
+              <p className="font-bold text-sm">Firma del Profesional / Evaluador</p>
+              <p className="text-xs text-gray-500">Ing. Lucas Mateo Tabares F.</p>
+           </div>
+           <div className="text-right text-[10px] text-gray-400">
+              <p>Generado con App Evaluación Broca y Roya</p>
+              <p>Desarrollado por Ing. Lucas Mateo Tabares F.</p>
+           </div>
         </div>
       </div>
 
