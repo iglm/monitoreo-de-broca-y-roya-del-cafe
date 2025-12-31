@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, BookText, Home, Plus, Search, User, MapPin, Save, Flag, Calculator, TrendingUp, DollarSign, Printer, Mail, Heart, Mic, Sun, AlertTriangle, Copyright, Calendar, Grid, CheckCircle2, FileDown, Shield, Download, Sprout, Loader2, BrainCircuit, AlertCircle } from 'lucide-react';
+import { ArrowLeft, BookText, Home, Plus, Search, User, MapPin, Save, Flag, Calculator, TrendingUp, DollarSign, Printer, Mail, Heart, Mic, Sun, AlertTriangle, Copyright, Calendar, Grid, CheckCircle2, FileDown, Shield, Download, Sprout, Loader2, AlertCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -269,20 +269,6 @@ const UserManual: React.FC<Props> = ({ onBack }) => {
           </p>
           
           <div className="space-y-4">
-             {/* Gemini AI */}
-             <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
-                <h4 className="font-bold text-purple-800 dark:text-purple-300 flex items-center gap-2 mb-2">
-                   <BrainCircuit size={18} /> Análisis IA con Gemini
-                </h4>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Una innovación en tecnología agrícola:</p>
-                <ul className="list-disc pl-5 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                   <li>Utiliza Inteligencia Artificial (Free Tier) integrada.</li>
-                   <li>Genera recomendaciones agronómicas personalizadas.</li>
-                   <li>Basadas en los datos específicos de su evaluación.</li>
-                   <li>Proporciona interpretación automática de resultados.</li>
-                </ul>
-             </div>
-
              {/* Traffic Lights Table */}
              <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                 <h4 className="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-3">

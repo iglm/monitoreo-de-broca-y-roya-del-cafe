@@ -3,7 +3,6 @@
   "description": "Herramienta técnica de campo offline para la evaluación fitosanitaria de café (Broca y Roya). Incluye análisis IA, reportes PDF y Excel.",
   "requestFramePermissions": [
     "camera",
-    "microphone",
     "geolocation"
   ]
 }
